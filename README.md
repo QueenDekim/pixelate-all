@@ -75,7 +75,11 @@ You can run this project either directly with Python or using Docker.
 
 3.  **Run the Docker container**:
     ```bash
+    # Run locally
     docker run -p 8000:8000 pixel-art-converter
+
+    # Run with a public Gradio share link
+    docker run -p 8000:8000 -e share=True pixel-art-converter
     ```
 
 4.  **Access the application**:

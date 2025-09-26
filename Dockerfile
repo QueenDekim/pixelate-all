@@ -24,6 +24,9 @@ ENV GRADIO_ALLOWED_PATHS="/code/app/static"
 # 7. Make port 8000 available to the world outside this container
 EXPOSE 8000
 
-# 8. Run app.main when the container launches
-# Use --host 0.0.0.0 to make it accessible from outside the container
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 8. Copy the entrypoint script and make it executable
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+# 9. Run the entrypoint script when the container launches
+ENTRYPOINT ["./entrypoint.sh"]

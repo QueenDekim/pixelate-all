@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+gradio
+python-multipart
+opencv-python-headless
+numpy
+scikit-image
+Pillow
+ffmpeg-python

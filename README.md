@@ -1,6 +1,10 @@
 # Pixel Art Converter
 
+**Язык / Language:** [Русский](./docs/README.ru_RU.md) **|** <ins>English</ins>
+
 This web application allows you to convert images, videos, and GIFs into a pixel art style. You can upload a file, choose the pixelation level, and apply an upscale factor to the result. The application is built with FastAPI and features a user-friendly interface created with Gradio.
+
+![preview](docs/preview.png)
 
 ## Features
 

@@ -41,12 +41,24 @@ You can run this project either directly with Python or using Docker.
     ```
 
 4.  **Run the application**:
+
+    The application is now run as a module to support command-line arguments.
+
     ```bash
-    uvicorn app.main:app --host 0.0.0.0 --port 8080
+    # Run locally on http://127.0.0.1:8000
+    python -m app.main
+
+    # Run with a public Gradio share link
+    python -m app.main --share
+    ```
+
+    You can also specify the host and port:
+    ```bash
+    python -m app.main --host 0.0.0.0 --port 8000
     ```
 
 5.  **Access the application**:
-    Open your web browser and navigate to `http://127.0.0.1:8080`.
+    Open your web browser and navigate to `http://127.0.0.1:8000` (or the host/port you specified).
 
 ### Option 2: Running with Docker
 
@@ -63,11 +75,11 @@ You can run this project either directly with Python or using Docker.
 
 3.  **Run the Docker container**:
     ```bash
-    docker run -p 8080:8080 pixel-art-converter
+    docker run -p 8000:8000 pixel-art-converter
     ```
 
 4.  **Access the application**:
-    Open your web browser and navigate to `http://127.0.0.1:8080`.
+    Open your web browser and navigate to `http://127.0.0.1:8000`.
 
 ## Testing
 
@@ -89,7 +101,7 @@ This will run all tests and generate a coverage report.
 
 Once the application is running, you can access the interactive Swagger UI documentation to explore the API endpoints.
 
--   **Swagger Docs**: `http://127.0.0.1:8080/docs`
+-   **Swagger Docs**: `http://127.0.0.1:8000/docs`
 
 This provides a clear overview of the available endpoints, parameters, and response models.
 
@@ -103,7 +115,7 @@ Here is an example of how to use the API with `curl` to process an image named `
 
 ```bash
 curl -X 'POST' \
-  'http://127.0.0.1:8080/api/pixelate' \
+  'http://127.0.0.1:8000/api/pixelate' \
   -F 'file=@/path/to/your/my_image.png' \
   -F 'pixel_size=12' \
   -F 'upscale_factor=2' \

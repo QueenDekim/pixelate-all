@@ -10,8 +10,8 @@ import gradio as gr
 import logging
 import json
 
-from app.processing import pixelate_image_file, pixelate_video_file, pixelate_gif_file
-from app.frontend import create_gradio_interface
+from .processing import pixelate_image_file, pixelate_video_file, pixelate_gif_file
+from .frontend import create_gradio_interface
 
 # Create directories if they don't exist
 UPLOADS_DIR = "app/static/uploads"
@@ -144,7 +144,7 @@ def manifest():
         {
             "short_name": "All to Pixelart",
             "name": "Pixelart converter",
-            "description": "web application allows you to convert images and videos into a pixel art style. You can upload a file, choose the pixelation level, and apply an upscale factor to the result. The application is built with FastAPI and features a user-friendly interface created with Gradio.",
+            "description": "Web application allows you to convert images and videos into a pixel art style. You can upload a file, choose the pixelation level, and apply an upscale factor to the result. The application is built with FastAPI and features a user-friendly interface created with Gradio.",
             "icons": [
                 {
                     "src": "static/icon-192x192.png",
@@ -169,11 +169,26 @@ def manifest():
         """
     )
 
-# Create and mount Gradio interface
 gradio_app = create_gradio_interface()
 app = gr.mount_gradio_app(
-    app, 
-    gradio_app, 
-    path="/", 
+    app,
+    gradio_app,
+    path="/",
     allowed_paths=[PROCESSED_DIR]
 )
+
+if __name__ == "__main__":
+    import argparse
+    import uvicorn
+
+    parser = argparse.ArgumentParser(description="Run the Pixel Art Converter app.")
+    parser.add_argument("--share", action="store_true", help="Enable Gradio public share link.")
+    parser.add_argument("--host", type=str, default="127.0.0.1", help="Host to run the server on.")
+    parser.add_argument("--port", type=int, default=8000, help="Port to run the server on.")
+    args = parser.parse_args()
+
+    if args.share:
+        print("Running with public share link.")
+        gradio_app.launch(share=True, server_name=args.host, server_port=args.port)
+    else:
+        uvicorn.run(app, host=args.host, port=args.port)

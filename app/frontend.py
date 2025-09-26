@@ -1,9 +1,16 @@
 import gradio as gr
-import requests
 import time
 import mimetypes
+import os
+import uuid
+import shutil
+from .processing import pixelate_image_file, pixelate_video_file, pixelate_gif_file
 
-API_URL = "http://127.0.0.1:8080/upload/"
+# Define directories for file storage, ensuring they exist
+UPLOADS_DIR = "app/static/uploads"
+PROCESSED_DIR = "app/static/processed"
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 def get_file_type(file_path):
     """Determines if a file is an image or a video."""
@@ -28,54 +35,61 @@ def update_previews(file_path):
         gr.update(value=file_path if is_video else None, visible=is_video),
     )
 
-def upload_and_process(file, pixel_size, upscale_factor):
+def upload_and_process(file_path, pixel_size, upscale_factor):
     """
-    Handles file upload, calls the backend, and yields progress updates.
+    Handles file processing by calling the appropriate Python function directly.
+    This avoids the need for an API call and allows the Gradio app to be shared.
     """
-    if file is None:
+    if file_path is None:
         raise gr.Error("Please upload a file first!")
 
-    # Initial state: clear previous results and show progress start
-    yield gr.update(value="Uploading...", visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+    # Initial state: clear previous results and show progress
+    yield gr.update(value="Processing...", visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
 
+    input_path = None  # Ensure it's available in the finally block
     try:
-        # Step 1: Uploading
-        filename = file
-        mime_type, _ = mimetypes.guess_type(filename)
-        if mime_type is None:
-            mime_type = 'application/octet-stream'
+        # Generate unique paths for the copied input and the output
+        file_extension = os.path.splitext(os.path.basename(file_path))[1]
+        unique_id = uuid.uuid4()
+        input_filename = f"{unique_id}{file_extension}"
+        output_filename = f"{unique_id}_pixelated{file_extension}"
+        input_path = os.path.join(UPLOADS_DIR, input_filename)
+        output_path = os.path.join(PROCESSED_DIR, output_filename)
 
-        with open(filename, 'rb') as f:
-            files = {'file': (filename, f, mime_type)}
-            data = {'pixel_size': pixel_size, 'upscale_factor': upscale_factor}
-            
-            response = requests.post(API_URL, files=files, data=data, timeout=600)
-            response.raise_for_status()
+        # Copy the uploaded temp file to a persistent location for processing
+        shutil.copy(file_path, input_path)
 
-        # Step 2: Processing
-        yield gr.update(value="Pixelating..."), gr.update(), gr.update(), gr.update()
-        result = response.json()
-        processed_path = result.get("processed_file_path")
-        if not processed_path:
-            raise gr.Error("Processing failed: No file path returned from server.")
-        time.sleep(1) # A small delay to make the progress feel more natural
+        # Determine file type and process accordingly
+        mime_type, _ = mimetypes.guess_type(input_path)
+        if mime_type == 'image/gif':
+            pixelate_gif_file(input_path, output_path, pixel_size, upscale_factor)
+        elif mime_type and mime_type.startswith('image/'):
+            pixelate_image_file(input_path, output_path, pixel_size, upscale_factor)
+        elif mime_type and mime_type.startswith('video/'):
+            pixelate_video_file(input_path, output_path, pixel_size, upscale_factor)
+        else:
+            raise gr.Error(f"Unsupported file type: {mime_type}. Please upload a valid image or video.")
 
-        # Step 3: Done
-        result_type = get_file_type(processed_path)
+        time.sleep(1)  # Small delay for better UX
+
+        # Final state: show results
+        result_type = get_file_type(output_path)
         is_image = result_type == 'image'
         is_video = result_type == 'video'
 
         yield (
             gr.update(value="Done!", visible=False),
-            gr.update(value=processed_path if is_image else None, visible=is_image),
-            gr.update(value=processed_path if is_video else None, visible=is_video),
-            gr.update(value=processed_path, visible=True, interactive=True),
+            gr.update(value=output_path if is_image else None, visible=is_image),
+            gr.update(value=output_path if is_video else None, visible=is_video),
+            gr.update(value=output_path, visible=True, interactive=True),
         )
 
-    except requests.exceptions.RequestException as e:
-        yield gr.update(value=f"Error: {e}", visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
     except Exception as e:
         yield gr.update(value=f"Error: {e}", visible=True), gr.update(visible=False), gr.update(visible=False), gr.update(visible=False)
+    finally:
+        # Clean up the copied input file
+        if input_path and os.path.exists(input_path):
+            os.remove(input_path)
 
 def create_gradio_interface():
     """Creates the new Gradio web interface."""
@@ -119,3 +133,4 @@ def create_gradio_interface():
         )
 
         return demo
+

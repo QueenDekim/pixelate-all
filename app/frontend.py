@@ -94,7 +94,7 @@ def upload_and_process(file_path, pixel_size, upscale_factor):
 def create_gradio_interface():
     """Creates the new Gradio web interface."""
     with gr.Blocks(theme=gr.themes.Soft()) as demo:
-        gr.Markdown("## Pixel Art Converter")
+        gr.Markdown("## 🖼 Pixel Art Converter")
         gr.Markdown("Upload an image or video, choose the pixelation level, and see the result.")
 
         # State to hold the uploaded file path
